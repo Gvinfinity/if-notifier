@@ -13,7 +13,10 @@ def get_news(campus):
     url = f"https://www.ifpe.edu.br/campus/{campus}/noticias/todas-as-noticias"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 \    (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-    html = requests.get(url=url, headers=headers).text
+    try:
+        html = requests.get(url=url, headers=headers).text
+    except ConnectionError:
+        return []
     parsed = BeautifulSoup(html, 'html.parser')
     news = parsed.body.find_all(
         'div', class_="tileItem visualIEFloatFix tile-collective-nitf-content")

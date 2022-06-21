@@ -68,17 +68,20 @@ async def update_news():
             print(type(e))
             traceback.print_exc()
 
+        if not news:
+            print(f"Not able to get news for: {guild.id}")
+            
         # Create a list of news to send
         new_news = [n for n in news if n not in cnews_guild]
 
-        if len(new_news > 10):
+        if len(new_news) > 10:
             whatsapp.send_alert(guild.id)
             continue
 
         if new_news:
             updated = False
             try:
-                await send_news(new_news, guild.id)
+                await send_news(new_news, guild)
                 if guild.id == 893328736051683329:
                     whatsapp.send_news(new_news)
             except Exception as e:
@@ -193,6 +196,7 @@ async def atualizarmanual_error(ctx, error):
 
 @bot.command(pass_context=True)
 async def massupdate(ctx):
+    print(f"Mass update by: {ctx.author}")
     await update_news()
 
 update_news.start()
