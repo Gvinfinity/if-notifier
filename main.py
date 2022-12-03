@@ -22,7 +22,7 @@ class NewsEncoder(JSONEncoder):
 
 bot = commands.Bot(command_prefix="&", intents=discord.Intents.all())
 current_news = {}
-db = []
+db = {}
 
 def load_news():
     # Carrega da memória as notícias já enviadas
@@ -66,6 +66,7 @@ async def send_news(nlist: list, guild):
 @tasks.loop(minutes=15.0)
 async def update_news():
     load_news()
+    load_campi()
     global current_news
     for guild in bot.guilds:
         cnews_guild = current_news.get(str(guild.id), [])
@@ -124,7 +125,7 @@ async def looper():
 async def on_ready():
     print(f"Bot iniciado como: {bot.user}")
     load_news()
-
+    load_campi()
 
 @bot.event
 async def on_guild_join(guild):
