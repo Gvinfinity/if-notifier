@@ -7,14 +7,14 @@ import json
 import whatsapp
 from discord.ext import commands, tasks
 from get_news import get_news
-from replit import db
 from json import JSONEncoder
 from news_class import dictToNews
-from keep_alive import keep_alive
+from dotenv import load_dotenv
+
+# Configura variaveis de ambiente
+load_dotenv()
 
 # Cria uma classe para permitir que as instâncias de News sejam serializadas
-
-
 class NewsEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
@@ -22,12 +22,13 @@ class NewsEncoder(JSONEncoder):
 
 bot = commands.Bot(command_prefix="&", intents=discord.Intents.all())
 current_news = {}
-
+db = []
 
 def load_news():
     # Carrega da memória as notícias já enviadas
     global current_news
-    loaded_news = json.loads(db['current_news'])
+    db_file = open("db/current_news.json", "r")
+    loaded_news = json.load(db_file)
     current_news = {}
     for k in loaded_news:
         l = []
@@ -35,9 +36,15 @@ def load_news():
             l.append(dictToNews(e))
         current_news[k] = l
 
+def load_campi():
+    #Carrega da memória o campus ligado à um ID
+    global db
+    db_file = open("db/db.json", "r")
+    db = json.load(db_file)
 
 def update_db():
-    db['current_news'] = json.dumps(current_news, indent=6, cls=NewsEncoder)
+    db_file = open("db/current_news.json", "w")
+    json.dump(current_news, db_file, indent=6, cls=NewsEncoder)
 
 
 async def send_news(nlist: list, guild):
@@ -56,7 +63,7 @@ async def send_news(nlist: list, guild):
                 break
 
 
-@tasks.loop(hours=1)
+@tasks.loop(minutes=15.0)
 async def update_news():
     load_news()
     global current_news
@@ -107,10 +114,10 @@ async def update_news():
 
 @update_news.before_loop
 async def looper():
-    delta = datetime.timedelta(hours=1)
+    delta = datetime.timedelta(minutes=15)
     now = datetime.datetime.now()
-    next_hour = (now+delta).replace(microsecond=0, second=0, minute=0)
-    await asyncio.sleep((next_hour-now).seconds)
+    next_hour = (now + delta).replace(microsecond=0, second=0, minute=0)
+    await asyncio.sleep((next_hour - now).seconds)
 
 
 @bot.event
@@ -123,6 +130,10 @@ async def on_ready():
 async def on_guild_join(guild):
     sys_channel = guild.system_channel
     db[guild.id] = "caruaru"
+    
+    with open("db/db.json", "w") as f:
+        json.dump(db, f)
+
     if sys_channel:
         try:
             await sys_channel.send("Utilize o comando \"&alterarcampus (seucampus)\" para definir de qual campi as notificações serão enviadas!")
@@ -135,6 +146,10 @@ async def on_guild_join(guild):
 @commands.has_permissions(administrator=True)
 async def alterarcampus(ctx, campus):
     db[ctx.guild.id] = str(campus)
+    
+    with open("db/db.json", "w") as f:
+        json.dump(db, f)
+
     await ctx.channel.send(f"Campus alterado com sucesso para {campus}")
 
 
@@ -200,5 +215,4 @@ async def massupdate(ctx):
     await update_news()
 
 update_news.start()
-keep_alive()
-bot.run(os.environ['DISCORD-BOT-TOKEN'])
+bot.run(os.environ['DISCORD_BOT_TOKEN'])

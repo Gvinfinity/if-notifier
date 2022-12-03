@@ -5,11 +5,14 @@ __pycache__/*
 poetry.lock
 pyproject.toml
 
-#Ignore news cache
-current_news.json
+#Ignore news and server config cache
+db/*
 
 #Ignore Debugging Log
 debug.log
 
 #Ignore VSCode Folder
 .vscode/*
+
+.env
+
